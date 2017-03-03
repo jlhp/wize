@@ -76,10 +76,25 @@
     <main class="container">
       <label for="url">Enter your url!</label>
       <input id="url"/>
+      <label for="custom_hash">Want it custom?!</label>
+      <input id="custom_hash"/>
       <br/>
       <button id="button">SHORTEN IT!</button>
 
-      <table id="table">
+      <br/>
+      <h2>TOP SCORES</h2>
+      <table id="table_top">
+        <thead>
+          <tr>
+            <th>URL</th>
+            <th>Visits</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+
+      <table id="table_all">
         <thead>
           <tr>
             <th>Tiny URL</th>
@@ -98,57 +113,66 @@
   
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
   <script type="text/javascript" src="jquery.basictable.min.js"></script>
+  <script type="text/javascript" src="regexp.js"></script>
 
   <script type="text/javascript">
-    var re_weburl = new RegExp(
-      "^" +
-        // protocol identifier
-        "(?:(?:https?|ftp)://)" +
-        // user:pass authentication
-        "(?:\\S+(?::\\S*)?@)?" +
-        "(?:" +
-          "(?!(?:10|127)(?:\\.\\d{1,3}){3})" +
-          "(?!(?:169\\.254|192\\.168)(?:\\.\\d{1,3}){2})" +
-          "(?!172\\.(?:1[6-9]|2\\d|3[0-1])(?:\\.\\d{1,3}){2})" +
-          "(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])" +
-          "(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}" +
-          "(?:\\.(?:[1-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))" +
-        "|" +
-          "(?:(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)" +
-          "(?:\\.(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)*" +
-          "(?:\\.(?:[a-z\\u00a1-\\uffff]{2,}))" +
-          "\\.?" +
-        ")" +
-        "(?::\\d{2,5})?" +
-        "(?:[/?#]\\S*)?" +
-      "$", "i"
-    );
-
     var rest = feathers.rest('http://104.131.112.17');
     var app = feathers()
       .configure(feathers.hooks()) 
       .configure(rest.superagent(superagent));
 
     var shortener = app.service('shortener');
+    var url = app.service('urls');
+    var tops = app.service('tops');
 
-    $('table').basictable();
+    $('#table_all').basictable();
+    $('#table_top').basictable();
+
+    url.find({order: '"updatedAt" DESC'}).then(function(res){
+      var urls = res;
+      for(var i = 0; i < urls.length; i++) {
+        
+        var short_url = 'http://104.131.112.17/r/' + urls[i].hash;
+        $("<tr id='"+urls[i].hash+"''><td><a href='"+short_url+"'>"+ short_url +"</a></td><td><a href='"+urls[i].url+"'>"+ urls[i].url.substring(0, 50) +"...</a></td></tr>").prependTo("#table_all > tbody");
+      }
+    });
+
+    tops.find().then(function(res){
+      var urls = res;
+      for(var i = 1; i < urls.length; i+=2) {
+        var short_url = 'http://104.131.112.17/r/' + urls[i].hash;
+        $("<tr><td><a href='"+urls[i - 1]+"'>"+ urls[i - 1] +"</a></td><td><a>"+ urls[i] +"</a></td></tr>").appendTo("#table_top > tbody");
+        //$("<tr><td><a href='"+urls[i]+"'>"+ urls[i] +"</a></td></tr>").appendTo("#table_top > tbody");
+      }
+    });
 
     $('#button').click(function() {
       var url = $('#url').val() || '';
+      var customHash = $('#custom_hash').val() || '';
+
+      if(!url.startsWith('http') && !url.startsWith('ftp')) {
+        url = 'http://' + url;
+      }
 
       if(!re_weburl.test(url)) {
         return alert('Please enter a valid URL');
       }
       
-      shortener.create({url: url})
+      shortener.create({url: url, custom_hash: customHash})
                .then(function(res) {
-                 var row = $("#"+res.hash);
-
-                 if(!!row) {
-                    row.remove();
+                 if(res.suggestion) {
+                    alert(res.message);
+                    $('#custom_hash').val(res.suggestion);
                  }
+                 else {
+                  var row = $("#"+res.hash);
 
-                 $("<tr id='"+res.hash+"''><td><a href='"+res.short_url+"'>"+ res.short_url +"</a></td><td><a href='"+url+"'>"+ url.substring(0, 50) +"</a></td></tr>").prependTo("table > tbody");
+                  if(!!row) {
+                    row.remove();
+                  }
+
+                  $("<tr id='"+res.hash+"''><td><a href='"+res.short_url+"'>"+ res.short_url +"</a></td><td><a href='"+url+"'>"+ url.substring(0, 50) +"...</a></td></tr>").prependTo("#table_all > tbody");
+                  }
                })
                .catch(function(error) {
                   alert(error.message);

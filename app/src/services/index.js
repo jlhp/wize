@@ -1,4 +1,6 @@
 'use strict';
+const top = require('./top');
+const url = require('./url');
 const r = require('./r');
 const shortener = require('./shortener');
 const authentication = require('./authentication');
@@ -17,4 +19,6 @@ module.exports = function() {
   app.configure(user);
   app.configure(shortener);
   app.configure(r);
+  app.configure(url);
+  app.configure(top);
 };

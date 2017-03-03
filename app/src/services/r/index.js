@@ -14,8 +14,11 @@ class Service {
   get(id, params) {
     params.redisClient.get(id, function(error, reply) {
       if(!reply) {
-        return params.res.redirect(410, 'http://104.131.112.17/')
+        return params.res.status(404).send('Resource was not found');
+        //return params.res.redirect(404, 'http://104.131.112.17/')
       }
+      params.redisClient.zincrby('topScores', 1, reply);
+
       return params.res.redirect(301, reply); 
     });
   }
