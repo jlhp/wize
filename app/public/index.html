@@ -1,0 +1,108 @@
+<html>
+  <head>
+    <title>Welcome to Feathers</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html, body {
+        font-family: 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif';
+        font-weight: 400;
+        font-size: 16px;
+        color: #333;
+      }
+
+      .center-text {
+        text-align: center;
+      }
+
+      main {
+        margin-top: 100px;
+        padding: 20px;
+      }
+
+      img.logo {
+        display: block;
+        margin: 0 auto;
+        max-width: 100%;
+        margin-bottom: 30px;
+      }
+
+      h2 {
+        font-size: 2em;
+        font-weight: 100;
+      }
+
+      footer {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 20px;
+      }
+
+      footer p {
+        font-weight: 300;
+        font-size: 1.0em;
+      }
+
+      a {
+        color: #31D8A0;
+        text-decoration: none;
+      }
+
+      input, button, label {
+        display: block;
+        margin: auto;
+        width: 50%;
+        padding: 10px;
+      }
+
+      label {
+        text-align: center;
+      }
+
+      a:hover,
+      a:focus {
+        color: #31D8A0;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <label for="url">Enter your url!</label>
+      <input id="url"/>
+      <br/>
+      <button id="button">SHORTEN IT!</button>
+
+    </main>
+  </body>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/superagent/1.2.0/superagent.min.js"></script>
+  <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/core-js/2.1.4/core.min.js"></script>
+  <script type="text/javascript" src="//unpkg.com/feathers-client@^1.0.0/dist/feathers.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+  <script type="text/javascript">
+    const rest = feathers.rest('http://104.131.112.17');
+    const app = feathers()
+      .configure(feathers.hooks()) 
+      .configure(rest.superagent(superagent));
+
+    var shortener = app.service('shortener');
+
+    document.getElementById('button').addEventListener('click', function() {
+      var url = document.getElementById('url').value;
+      
+      shortener.create({ url: url})
+               .then(function(result) {
+                 console.log(result);
+               })
+               .catch(function(error) {
+                  console.log(error);
+               });
+    });
+
+  </script>
+</html>
