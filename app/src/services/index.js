@@ -17,5 +17,4 @@ module.exports = function() {
   app.configure(user);
   app.configure(shortener);
   app.configure(r);
-  app.configure(r);
 };

@@ -1,6 +1,6 @@
 'use strict';
 
-const path = require('path');
+const path = require('path'); 
 const serveStatic = require('feathers').static;
 const favicon = require('serve-favicon');
 const compress = require('compression');
@@ -13,6 +13,10 @@ const bodyParser = require('body-parser');
 const socketio = require('feathers-socketio');
 const middleware = require('./middleware');
 const services = require('./services');
+const redis = require("redis");
+const bluebird = require("bluebird");
+bluebird.promisifyAll(redis.RedisClient.prototype);
+bluebird.promisifyAll(redis.Multi.prototype);
 
 const app = feathers();
 
@@ -29,6 +33,7 @@ app.use(compress())
   .configure(rest())
   .use(function(req, res, next) {
     req.feathers.res = res;
+    req.feathers.redisClient = redis.createClient();
     next();
   })
   .configure(socketio())

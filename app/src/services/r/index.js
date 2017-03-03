@@ -1,7 +1,5 @@
 'use strict';
 
-const redis = require("redis");
-const client = redis.createClient();
 const hooks = require('./hooks');
 
 class Service {
@@ -14,7 +12,10 @@ class Service {
   }
 
   get(id, params) {
-    client.get(id, function(error, reply) {
+    params.redisClient.get(id, function(error, reply) {
+      if(!reply) {
+        return params.res.redirect(410, 'http://104.131.112.17/')
+      }
       return params.res.redirect(301, reply); 
     });
   }

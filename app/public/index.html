@@ -70,6 +70,7 @@
         color: #31D8A0;
       }
     </style>
+    <link rel="stylesheet" type="text/css" href="basictable.css" />
   </head>
   <body>
     <main class="container">
@@ -78,29 +79,79 @@
       <br/>
       <button id="button">SHORTEN IT!</button>
 
+      <table id="table">
+        <thead>
+          <tr>
+            <th>Tiny URL</th>
+            <th>Original URL</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+
     </main>
   </body>
   <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/superagent/1.2.0/superagent.min.js"></script>
   <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/core-js/2.1.4/core.min.js"></script>
   <script type="text/javascript" src="//unpkg.com/feathers-client@^1.0.0/dist/feathers.js"></script>
+  
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+  <script type="text/javascript" src="jquery.basictable.min.js"></script>
+
   <script type="text/javascript">
-    const rest = feathers.rest('http://104.131.112.17');
-    const app = feathers()
+    var re_weburl = new RegExp(
+      "^" +
+        // protocol identifier
+        "(?:(?:https?|ftp)://)" +
+        // user:pass authentication
+        "(?:\\S+(?::\\S*)?@)?" +
+        "(?:" +
+          "(?!(?:10|127)(?:\\.\\d{1,3}){3})" +
+          "(?!(?:169\\.254|192\\.168)(?:\\.\\d{1,3}){2})" +
+          "(?!172\\.(?:1[6-9]|2\\d|3[0-1])(?:\\.\\d{1,3}){2})" +
+          "(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])" +
+          "(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}" +
+          "(?:\\.(?:[1-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))" +
+        "|" +
+          "(?:(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)" +
+          "(?:\\.(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)*" +
+          "(?:\\.(?:[a-z\\u00a1-\\uffff]{2,}))" +
+          "\\.?" +
+        ")" +
+        "(?::\\d{2,5})?" +
+        "(?:[/?#]\\S*)?" +
+      "$", "i"
+    );
+
+    var rest = feathers.rest('http://104.131.112.17');
+    var app = feathers()
       .configure(feathers.hooks()) 
       .configure(rest.superagent(superagent));
 
     var shortener = app.service('shortener');
 
-    document.getElementById('button').addEventListener('click', function() {
-      var url = document.getElementById('url').value;
+    $('table').basictable();
+
+    $('#button').click(function() {
+      var url = $('#url').val() || '';
+
+      if(!re_weburl.test(url)) {
+        return alert('Please enter a valid URL');
+      }
       
-      shortener.create({ url: url})
-               .then(function(result) {
-                 console.log(result);
+      shortener.create({url: url})
+               .then(function(res) {
+                 var row = $("#"+res.hash);
+
+                 if(!!row) {
+                    row.remove();
+                 }
+
+                 $("<tr id='"+res.hash+"''><td><a href='"+res.short_url+"'>"+ res.short_url +"</a></td><td><a href='"+url+"'>"+ url.substring(0, 50) +"</a></td></tr>").prependTo("table > tbody");
                })
                .catch(function(error) {
-                  console.log(error);
+                  alert(error.message);
                });
     });
 
